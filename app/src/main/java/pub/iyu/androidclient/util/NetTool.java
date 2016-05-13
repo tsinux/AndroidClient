@@ -1,17 +1,26 @@
 package pub.iyu.androidclient.util;
 
+import android.os.Environment;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -246,11 +255,131 @@ public class NetTool {
         //构建一个请求路径
         HttpPost post = new HttpPost(urlPath);
         //设置请求实体
+        post.setEntity(entitydata);
+        //浏览器对象
+        DefaultHttpClient client = new DefaultHttpClient();
+        //执行post请求
+        HttpResponse response = client.execute(post);
+        //从状态行中获取状态码，判断响应码是否符合要求
+        if(response.getStatusLine().getStatusCode() == 200){
+            HttpEntity entity = response.getEntity();
+            InputStream inputStream = entity.getContent();
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream,encoding);
+            BufferedReader reader = new BufferedReader(inputStreamReader);//读取字符串
+            String s;
+            String responseData = "";
+            while((s = reader.readLine()) != null){
+                responseData += s;
+            }
+            reader.close();//关闭输入流
+            return responseData;
+        }
 
 
-
-        return "hello";
+        return "sendHttpClientPost error";
     }
+
+    /**
+     * 根据URL直接读文件内容，前提是这个文件当中的内容是文本，函数的返回值就是文件当中的内容
+     */
+    public static String readTxtFile(String urlStr,String encoding)
+        throws Exception{
+        StringBuffer sb = new StringBuffer();
+        String line = null;
+        BufferedReader buffer = null;
+        try {
+            //创建一个URL对象
+            URL url = new URL(urlStr);
+            //创建一个Http连接
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            //使用IO流读取数据
+            buffer = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(),encoding));
+            while((line = buffer.readLine()) != null){
+                sb.append(line);
+            }
+        }catch (Exception e){
+            throw e;
+        }finally {
+            try {
+                buffer.close();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        return sb.toString();
+    }
+
+    //根据URL得到输入流
+    public static InputStream getInputStreamFromUrl(String urlStr)
+            throws MalformedURLException,IOException{
+        URL url = new URL(urlStr);
+        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        InputStream inputStream = urlConnection.getInputStream();
+        return inputStream;
+    }
+
+    //将一个InputStream里面的数据写入到SD卡中
+    private static File write2SDFromInput(String diretory,String fileName,InputStream input){
+        File file = null;
+        String SDPATH = Environment.getExternalStorageDirectory().toString();
+        FileOutputStream output = null;
+        File dir = new File(SDPATH + diretory);
+        if(!dir.exists()){
+            dir.mkdir();
+        }
+        try {
+            file = new File(dir + File.separator + fileName);
+            file.createNewFile();
+            output = new FileOutputStream(file);
+            byte buffer[] = new byte[1024];
+            while((input.read(buffer)) != -1){
+                output.write(buffer);
+            }
+            output.flush();
+        }catch (IOException e){
+            e.printStackTrace();
+        }finally {
+            try{
+                output.close();
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+        }
+        return file;
+    }
+
+    /**
+     * 下载文件
+     * 返回整型
+     * -1:代表下载文件出错
+     * 0：代表下载文件成功
+     * 1：代表文件已经存在
+     */
+    public static int downloadFile(String urlStr,String path,String fileName)
+        throws Exception{
+        InputStream inputStream = null;
+        try {
+            inputStream = getInputStreamFromUrl(urlStr);
+            File resultFile = write2SDFromInput(path,fileName,inputStream);
+            if(resultFile == null){
+                return -1;
+            }
+        }catch (Exception e){
+            return -1;
+        }finally {
+            try {
+                inputStream.close();
+            }catch (Exception e){
+                throw e;
+            }
+        }
+        return 0;
+    }
+
+
+
+
+
 
 
 }
