@@ -27,13 +27,13 @@ public class MainActivity extends Activity {
     private Button btnDownloadFile = null;
 
     //将下面的IP改成服务器端IP
-    String serverIP = "http://192.168.0.188";
+    String serverIP = "http://192.168.0.114";
 
-    private String txtUrl = serverIP + "/AppServer/SynTxtDataServlet";
-    private String url = serverIP + "/AppServer/SynDataServlet";
-    private String uploadUrl = serverIP + "/AppServer/UploadFileServlet";
-    private String fileUrl = serverIP + "/AppServer/file.jpg";
-    private String txtFileUrl = serverIP + "/AppServer/txtFile.txt";
+    private String txtUrl = serverIP + "/ServerForAndroidClient/SynTxtDataServlet";
+    private String url = serverIP + "/ServerForAndroidClient/SynDataServlet";
+    private String uploadUrl = serverIP + "/ServerForAndroidClient/UploadFileServlet";
+    private String fileUrl = serverIP + "/ServerForAndroidClient/file.jpg";
+    private String txtFileUrl = serverIP + "/ServerForAndroidClient/txtFile.txt";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
